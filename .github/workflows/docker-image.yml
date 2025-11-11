@@ -7,8 +7,10 @@ on:
 env:
   IMAGE_NAME: ramakrishnaragi/flask-demo-app
   K8S_MANIFEST_PATH: k8s/deployment.yml
+
 permissions:
   contents: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -46,31 +48,30 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
             ${{ env.IMAGE_NAME }}:latest
 
+      - name: Install yq (for YAML editing)
+        run: sudo apt-get update && sudo apt-get install -y yq
+
       - name: Update k8s/deployment.yml image tag
         id: update_manifest
         run: |
           IMAGE_FULL=${IMAGE_NAME}:${{ steps.vars.outputs.SHORT_SHA }}
           echo "Updating ${GITHUB_WORKSPACE}/${K8S_MANIFEST_PATH} to use image ${IMAGE_FULL}"
-          # Use yq if available for more reliable yaml edits; use sed fallback here
-          if command -v yq >/dev/null 2>&1; then
-            yq e '.spec.template.spec.containers[0].image = strenv(IMAGE_FULL)' -i "${K8S_MANIFEST_PATH}"
-          else
-            # This sed works for the simple manifest below (replace the image line)
-            sed -i "s|image: .*|image: ${IMAGE_FULL}|" "${K8S_MANIFEST_PATH}"
-          fi
+
+          # Update the image tag in YAML
+          yq e -i ".spec.template.spec.containers[0].image = \"${IMAGE_FULL}\"" "${K8S_MANIFEST_PATH}"
+
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+
           git add "${K8S_MANIFEST_PATH}"
-          # commit only if changed
           if ! git diff --staged --quiet; then
             git commit -m "ci: bump image to ${IMAGE_FULL}"
             git push origin HEAD:main
-            echo "Manifest updated and pushed."
+            echo "✅ Manifest updated and pushed."
           else
-            echo "No change in manifest."
+            echo "ℹ️ No change in manifest."
           fi
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           K8S_MANIFEST_PATH: ${{ env.K8S_MANIFEST_PATH }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
