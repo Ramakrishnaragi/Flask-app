@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: flask-demo-app
-          image: ramakrishnaragi/flask-demo-app:13dc94a19dcb12625d8d7021fbdf15b9616e2afe
+          image: ramakrishnaragi/flask-demo-app:950a204f6368e895257a3d440e9f0891c2dca954
           imagePullPolicy: "Always"
           ports:
             - containerPort: 5000
