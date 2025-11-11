@@ -17,8 +17,7 @@ spec:
     spec:
       containers:
         - name: flask-demo-app
-
-          image: ramakrishnaragi/flask-demo-app:latest          
+          image: ""
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
@@ -44,6 +43,3 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
-
-
-
