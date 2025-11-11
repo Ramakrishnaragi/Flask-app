@@ -16,11 +16,9 @@ spec:
     spec:
       containers:
         - name: flask-demo-app
-
           # Initial image: will be updated by GitHub Actions with git-sha tag
-          image: ramakrishnaragi/flask-demo-app:latest
-         # initial image: will be overwritten by GitHub Actions to use the git-sha tag
-        #  image: ""
+          image: ""
+          #  image: ""
 
           imagePullPolicy: Always
           ports:
@@ -47,8 +45,4 @@ spec:
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
-
       restartPolicy: Always
-
-
-
