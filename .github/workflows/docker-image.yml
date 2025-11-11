@@ -1,4 +1,4 @@
-name: Build and Push Docker image, Update K8s manifest
+name: Build and Push Docker Image
 
 on:
   push:
@@ -6,22 +6,19 @@ on:
 
 env:
   IMAGE_NAME: ramakrishnaragi/flask-demo-app
-  K8S_MANIFEST_PATH: k8s/deployment.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up QEMU (for multi-platform, optional)
+      - name: Set up QEMU (optional for multi-platform)
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
@@ -29,8 +26,7 @@ jobs:
 
       - name: Get short SHA
         id: vars
-        run: |
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -38,7 +34,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -47,31 +43,3 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
             ${{ env.IMAGE_NAME }}:latest
-
-      - name: Install yq (for YAML editing)
-        run: sudo apt-get update && sudo apt-get install -y yq
-
-      - name: Update k8s/deployment.yml image tag
-        id: update_manifest
-        run: |
-          IMAGE_FULL=${IMAGE_NAME}:${{ steps.vars.outputs.SHORT_SHA }}
-          echo "Updating ${GITHUB_WORKSPACE}/${K8S_MANIFEST_PATH} to use image ${IMAGE_FULL}"
-
-          # Update the image tag in YAML
-          yq e -i ".spec.template.spec.containers[0].image = \"${IMAGE_FULL}\"" "${K8S_MANIFEST_PATH}"
-
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-
-          git add "${K8S_MANIFEST_PATH}"
-          if ! git diff --staged --quiet; then
-            git commit -m "ci: bump image to ${IMAGE_FULL}"
-            git push origin HEAD:main
-            echo "✅ Manifest updated and pushed."
-          else
-            echo "ℹ️ No change in manifest."
-          fi
-        env:
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
-          K8S_MANIFEST_PATH: ${{ env.K8S_MANIFEST_PATH }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
