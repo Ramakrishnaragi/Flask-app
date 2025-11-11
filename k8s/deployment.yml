@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flask-demo-app
+  namespace: default
   labels:
     app: flask-demo-app
 spec:
@@ -16,33 +17,30 @@ spec:
     spec:
       containers:
         - name: flask-demo-app
-          # Initial image: will be updated by GitHub Actions with git-sha tag
-          image: ""
-          #  image: ""
-
+          image: ramakrishnaragi/flask-demo-app:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
             - name: ENV
-              value: "production"
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "256Mi"
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+              value: production
           livenessProbe:
             httpGet:
               path: /
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
-      restartPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
