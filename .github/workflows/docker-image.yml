@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: yourdockerhub/flask-demo-app
+  IMAGE_NAME: ramakrishnaragi/flask-demo-app
 
 jobs:
   build-and-deploy:
